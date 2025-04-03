@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Ban Export</title>
+</head>
+<body>
+    <h2>Reddit Banned Users Export</h2>
+    <button onclick="fetchBannedUsers()">Download CSV</button>
+    <p id="status"></p>
+
+    <script>
+        async function fetchBannedUsers() {
+            document.getElementById('status').innerText = 'Fetching data...';
+            var next_page = '';
+            let users = [];
+
+            do {
+                let response = await fetch(`https://www.reddit.com/r/PokemonGoTrade/about/banned.json?after=${next_page}`);
+                let data = await response.json();
+                next_page = data.data.after;
+                users.push(...data.data.children);
+            } while (next_page);
+
+            document.getElementById('status').innerText = `Fetched ${users.length} banned users. Processing data...`;
+
+            users.forEach(user => {
+                let note = user.note || "No reason provided";
+                if (note.includes("Ban Evasion")) note = "Ban Evasion";
+                else if (note.includes("Behaviour") || note.includes("No Harassment")) note = "Harassment, Bullying or Discrimination";
+                else if (note.includes("No scamming") || note.includes("Scamming")) note = "Scamming";
+                else if (note.includes("selling")) note = "Selling of accounts, Pokémon, or services";
+                else if (note.includes("Threatening")) note = "Threatening, harassing, or inciting violence";
+                else if (note.includes("No spam") || note.includes("Spam")) note = "Spamming";
+                
+                user.note = note.replace(/u\/\S+/g, 'u/******');
+            });
+
+            users.sort((a, b) => a.note.localeCompare(b.note));
+
+            let csvContent = "Name,Note\n";
+            users.forEach(user => {
+                csvContent += `"u/${user.name}","${user.note.replace(/"/g, '""')}"\n`;
+            });
+
+            let blob = new Blob([csvContent], { type: 'text/csv' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'banned_users.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            document.getElementById('status').innerText = 'CSV file downloaded successfully!';
+        }
+    </script>
+</body>
+</html>
