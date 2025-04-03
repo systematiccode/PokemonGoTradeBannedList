@@ -17,7 +17,7 @@
             let users = [];
 
             do {
-                let response = await fetch(`https://corsproxy.io/?https://www.reddit.com/r/PokemonGoTrade/about/banned.json?after=${next_page}`);
+                let response = await fetch(`https://www.reddit.com/r/PokemonGoTrade/about/banned.json?after=${next_page}`);
                 let data = await response.json();
                 next_page = data.data.after;
                 users.push(...data.data.children);
